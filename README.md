@@ -2,7 +2,7 @@
 A full stack web application that detects and visualizes suspicious ESG (Environmental, Social, Governance) compliance data from company sustainability reports using statistical anomaly detection — built with HTML, CSS, JavaScript, Node.js, Express.js, and MySQL.
 
 The Hierarchy in which the file access each other :
-
+```
 MySQL Server (Data Storage)
     ↑
 db/db.js (Database Connection)
@@ -44,3 +44,4 @@ frontend/pages/ (User Interface)
 css/style.css (Styling — used by all pages)
     ↑
 Browser (What user sees)
+```
