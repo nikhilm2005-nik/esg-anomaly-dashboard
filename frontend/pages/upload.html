@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload CSV - ESG Dashboard</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">📊 ESG Dashboard</div>
+        <ul class="nav-links">
+            <li><a href="../index.html">Dashboard</a></li>
+            <li><a href="companies.html">Companies</a></li>
+            <li><a href="anomalies.html">Anomalies</a></li>
+            <li><a href="upload.html" class="active">Upload</a></li>
+            <li><a href="compare.html">Compare</a></li>
+            <li><a href="add-company.html">Add Company</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <h1 class="page-title">Upload ESG Dataset</h1>
+
+        <!-- Required Format Warning -->
+        <div style="background:#fff8e1; border-left:4px solid #f57c00;
+             padding:20px 25px; border-radius:8px; margin-bottom:25px;">
+            <h3 style="color:#f57c00; margin-bottom:10px;">
+                ⚠️ Required CSV Format
+            </h3>
+            <p style="color:#555; margin-bottom:12px;">
+                Your CSV file <b>must contain</b> the following column names exactly as shown below.
+                Any CSV with different column names will not be imported correctly.
+            </p>
+
+            <!-- Columns Table -->
+            <table style="width:100%; border-collapse:collapse; margin-bottom:15px;">
+                <thead>
+                    <tr style="background:#f57c00;">
+                        <th style="padding:8px 12px; color:white; text-align:left;">Column Name</th>
+                        <th style="padding:8px 12px; color:white; text-align:left;">Description</th>
+                        <th style="padding:8px 12px; color:white; text-align:left;">Example</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="background:white;">
+                        <td style="padding:8px 12px; border-bottom:1px solid #eee;"><code>name</code></td>
+                        <td style="padding:8px 12px; border-bottom:1px solid #eee;">Company name</td>
+                        <td style="padding:8px 12px; border-bottom:1px solid #eee;">Tesla Inc</td>
+                    </tr>
+                    <tr style="background:#fafafa;">
+                        <td style="padding:8px 12px; border-bottom:1px solid #eee;"><code>industry</code></td>
+                        <td style="padding:8px 12px; border-bottom:1px solid #eee;">Industry sector</td>
+                        <td style="padding:8px 12px; border-bottom:1px solid #eee;">Technology</td>
+                    </tr>
+                    <tr style="background:white;">
+                        <td style="padding:8px 12px; border-bottom:1px solid #eee;"><code>exchange</code></td>
+                        <td style="padding:8px 12px; border-bottom:1px solid #eee;">Stock exchange</td>
+                        <td style="padding:8px 12px; border-bottom:1px solid #eee;">NASDAQ</td>
+                    </tr>
+                    <tr style="background:#fafafa;">
+                        <td style="padding:8px 12px; border-bottom:1px solid #eee;"><code>environment_score</code></td>
+                        <td style="padding:8px 12px; border-bottom:1px solid #eee;">Environmental score</td>
+                        <td style="padding:8px 12px; border-bottom:1px solid #eee;">450</td>
+                    </tr>
+                    <tr style="background:white;">
+                        <td style="padding:8px 12px; border-bottom:1px solid #eee;"><code>social_score</code></td>
+                        <td style="padding:8px 12px; border-bottom:1px solid #eee;">Social score</td>
+                        <td style="padding:8px 12px; border-bottom:1px solid #eee;">380</td>
+                    </tr>
+                    <tr style="background:#fafafa;">
+                        <td style="padding:8px 12px; border-bottom:1px solid #eee;"><code>governance_score</code></td>
+                        <td style="padding:8px 12px; border-bottom:1px solid #eee;">Governance score</td>
+                        <td style="padding:8px 12px; border-bottom:1px solid #eee;">290</td>
+                    </tr>
+                    <tr style="background:white;">
+                        <td style="padding:8px 12px; border-bottom:1px solid #eee;"><code>total_score</code></td>
+                        <td style="padding:8px 12px; border-bottom:1px solid #eee;">Total ESG score</td>
+                        <td style="padding:8px 12px; border-bottom:1px solid #eee;">1120</td>
+                    </tr>
+                    <tr style="background:#fafafa;">
+                        <td style="padding:8px 12px;"><code>last_processing_date</code></td>
+                        <td style="padding:8px 12px;">Date of report</td>
+                        <td style="padding:8px 12px;">2024-01-15</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Download Template Button -->
+            <button class="btn btn-primary" onclick="downloadTemplate()">
+                📥 Download Sample CSV Template
+            </button>
+        </div>
+
+        <!-- Upload Section -->
+        <div class="section">
+            <h2>Upload CSV File</h2>
+            <p style="color:#888; margin-bottom:20px;">
+                Upload your ESG dataset CSV file to import companies and detect anomalies automatically.
+            </p>
+
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📁</div>
+                <p>Drag and drop your CSV file here or</p>
+                <input type="file" id="csvFile" accept=".csv" style="display:none">
+                <button class="btn btn-primary" onclick="document.getElementById('csvFile').click()">
+                    Browse File
+                </button>
+                <p id="fileName" style="margin-top:10px; color:#4ecca3;"></p>
+            </div>
+
+            <button class="btn btn-primary" id="uploadBtn" onclick="uploadCSV()"
+                style="margin-top:20px; display:none;">
+                Upload & Import Data
+            </button>
+
+            <!-- Progress -->
+            <div id="progressArea" style="display:none; margin-top:20px;">
+                <p style="color:#888;">Processing your file please wait...</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+
+            <!-- Result -->
+            <div id="resultArea" style="display:none; margin-top:20px;"></div>
+        </div>
+    </div>
+
+    <script src="../js/upload.js"></script>
+    <script>
+        function downloadTemplate() {
+            const headers = [
+                'name', 'industry', 'exchange',
+                'environment_score', 'social_score',
+                'governance_score', 'total_score',
+                'last_processing_date'
+            ];
+
+            const sampleRows = [
+                ['Tesla Inc', 'Technology', 'NASDAQ', '450', '380', '290', '1120', '2024-01-15'],
+                ['EcoStart Ltd', 'Energy', 'NYSE', '620', '410', '380', '1410', '2024-01-15'],
+                ['GreenBridge Co', 'Manufacturing', 'NASDAQ', '310', '290', '250', '850', '2024-01-15']
+            ];
+
+            const csvContent = [
+                headers.join(','),
+                ...sampleRows.map(row => row.join(','))
+            ].join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'esg_template.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
