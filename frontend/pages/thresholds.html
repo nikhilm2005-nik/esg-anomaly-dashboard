@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thresholds - ESG Dashboard</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">📊 ESG Dashboard</div>
+        <ul class="nav-links">
+            <li><a href="../index.html">Dashboard</a></li>
+            <li><a href="companies.html">Companies</a></li>
+            <li><a href="anomalies.html">Anomalies</a></li>
+            <li><a href="upload.html">Upload</a></li>
+            <li><a href="compare.html">Compare</a></li>
+            <li><a href="add-company.html">Add Company</a></li>
+            <li><a href="thresholds.html" class="active">Thresholds</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <h1 class="page-title">Sector Thresholds</h1>
+
+        <!-- Info Box -->
+        <div style="background:#e8f5e9; border-left:4px solid #388e3c;
+             padding:20px 25px; border-radius:8px; margin-bottom:25px;">
+            <h3 style="color:#388e3c; margin-bottom:8px;">ℹ️ How Thresholds Work</h3>
+            <p style="color:#555;">
+                Each sector has its own ESG threshold values based on real market standards.
+                Scores are compared against these thresholds to determine if a company is
+                <b style="color:#d32f2f;">Poor 🔴</b>,
+                <b style="color:#f57c00;">Average 🟡</b>,
+                <b style="color:#388e3c;">Good 🟢</b> or
+                <b style="color:#7b1fa2;">Suspicious ⚠️</b>.
+            </p>
+        </div>
+
+        <!-- Sector Filter -->
+        <div class="section">
+            <div style="display:flex; gap:15px; flex-wrap:wrap;">
+                <select id="sectorFilter"
+                    style="padding:10px 15px; border:1px solid #ddd;
+                    border-radius:8px; font-size:0.95rem; flex:1;">
+                    <option value="">All Sectors</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Thresholds Table -->
+        <div class="section">
+            <h2>Current Threshold Values</h2>
+            <br>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Sector</th>
+                        <th>Metric</th>
+                        <th>🔴 Poor Below</th>
+                        <th>🟢 Good Above</th>
+                        <th>⚠️ Suspicious Above</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="thresholdsTable">
+                    <tr>
+                        <td colspan="6" style="text-align:center;">
+                            Loading...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Result -->
+        <div id="resultArea" style="display:none; margin-bottom:20px;"></div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" style="display:none; position:fixed; top:0; left:0;
+         width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
+        <div style="background:white; margin:100px auto; padding:30px;
+             border-radius:12px; max-width:450px;">
+            <h2 style="margin-bottom:20px;">✏️ Edit Threshold</h2>
+            <p id="editLabel" style="color:#888; margin-bottom:20px;"></p>
+
+            <div class="form-group">
+                <label>🔴 Poor Below</label>
+                <input type="number" id="editPoor" step="0.1">
+            </div>
+            <div class="form-group">
+                <label>🟢 Good Above</label>
+                <input type="number" id="editGood" step="0.1">
+            </div>
+            <div class="form-group">
+                <label>⚠️ Suspicious Above</label>
+                <input type="number" id="editSuspicious" step="0.1">
+            </div>
+
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="btn btn-primary" onclick="saveThreshold()">
+                    💾 Save Changes
+                </button>
+                <button class="btn" onclick="closeModal()"
+                    style="background:#eee; color:#333;">
+                    Cancel
+                </button>
+            </div>
+            <div id="editResult" style="display:none; margin-top:15px;"></div>
+        </div>
+    </div>
+
+    <script src="../js/thresholds.js"></script>
+</body>
+</html>
