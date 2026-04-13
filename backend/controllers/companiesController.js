@@ -2,17 +2,12 @@ const db = require('../db/db');
 
 exports.getAllCompanies = async (req, res) => {
     try {
-        // Get max score for normalization
-        const [[{ maxScore }]] = await db.query(
-            'SELECT MAX(total_score) as maxScore FROM esg_metrics'
-        );
-
         const [rows] = await db.query(`
-            SELECT c.*, 
-            AVG(e.total_score) as avg_score,
-            AVG(e.environmental_score) as avg_env,
-            AVG(e.social_score) as avg_soc,
-            AVG(e.governance_score) as avg_gov,
+            SELECT c.*,
+            ROUND(AVG(e.total_score), 1) as avg_score,
+            ROUND(AVG(e.environmental_score), 1) as avg_env,
+            ROUND(AVG(e.social_score), 1) as avg_soc,
+            ROUND(AVG(e.governance_score), 1) as avg_gov,
             COUNT(a.id) as anomaly_count
             FROM companies c
             LEFT JOIN esg_metrics e ON c.id = e.company_id
@@ -20,25 +15,7 @@ exports.getAllCompanies = async (req, res) => {
             GROUP BY c.id
             ORDER BY anomaly_count DESC
         `);
-
-        // Normalize all scores to 0-100
-        const normalized = rows.map(row => ({
-            ...row,
-            avg_score: row.avg_score
-                ? ((row.avg_score / maxScore) * 100).toFixed(1)
-                : 'N/A',
-            avg_env: row.avg_env
-                ? ((row.avg_env / maxScore) * 100).toFixed(1)
-                : 'N/A',
-            avg_soc: row.avg_soc
-                ? ((row.avg_soc / maxScore) * 100).toFixed(1)
-                : 'N/A',
-            avg_gov: row.avg_gov
-                ? ((row.avg_gov / maxScore) * 100).toFixed(1)
-                : 'N/A',
-        }));
-
-        res.json(normalized);
+        res.json(rows);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -58,10 +35,6 @@ exports.getCompanyById = async (req, res) => {
 
 exports.getRecentCompanies = async (req, res) => {
     try {
-        const [[{ maxScore }]] = await db.query(
-            'SELECT MAX(total_score) as maxScore FROM esg_metrics'
-        );
-
         const [rows] = await db.query(`
             SELECT c.*, e.environmental_score, e.social_score,
                    e.governance_score, e.total_score,
@@ -73,25 +46,7 @@ exports.getRecentCompanies = async (req, res) => {
             GROUP BY c.id
             ORDER BY c.id DESC
         `);
-
-        // Normalize scores
-        const normalized = rows.map(row => ({
-            ...row,
-            environmental_score: row.environmental_score
-                ? ((row.environmental_score / maxScore) * 100).toFixed(1)
-                : 'N/A',
-            social_score: row.social_score
-                ? ((row.social_score / maxScore) * 100).toFixed(1)
-                : 'N/A',
-            governance_score: row.governance_score
-                ? ((row.governance_score / maxScore) * 100).toFixed(1)
-                : 'N/A',
-            total_score: row.total_score
-                ? ((row.total_score / maxScore) * 100).toFixed(1)
-                : 'N/A',
-        }));
-
-        res.json(normalized);
+        res.json(rows);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -196,41 +151,65 @@ exports.deleteCompany = async (req, res) => {
 async function detectAnomalies(companyId, sector, year, envScore, socScore, govScore) {
     let count = 0;
 
-    const [industryData] = await db.query(
-        `SELECT AVG(e.environmental_score) as avgEnv,
-                AVG(e.social_score) as avgSoc,
-                AVG(e.governance_score) as avgGov,
-                STDDEV(e.environmental_score) as stdEnv,
-                STDDEV(e.social_score) as stdSoc,
-                STDDEV(e.governance_score) as stdGov
+    // Get all scores in same sector for percentile calculation
+    const [sectorData] = await db.query(
+        `SELECT e.environmental_score, e.social_score, e.governance_score
          FROM esg_metrics e
          JOIN companies c ON e.company_id = c.id
-         WHERE c.sector = ?`,
+         WHERE c.sector = ?
+         ORDER BY e.environmental_score`,
         [sector]
     );
 
-    const avg = industryData[0];
+    if (sectorData.length < 3) return count;
+
     const metrics = [
-        { name: 'environmental', score: envScore, avg: avg.avgEnv, std: avg.stdEnv },
-        { name: 'social', score: socScore, avg: avg.avgSoc, std: avg.stdSoc },
-        { name: 'governance', score: govScore, avg: avg.avgGov, std: avg.stdGov },
+        {
+            name: 'environmental',
+            score: envScore,
+            allScores: sectorData.map(r => r.environmental_score).sort((a, b) => a - b)
+        },
+        {
+            name: 'social',
+            score: socScore,
+            allScores: sectorData.map(r => r.social_score).sort((a, b) => a - b)
+        },
+        {
+            name: 'governance',
+            score: govScore,
+            allScores: sectorData.map(r => r.governance_score).sort((a, b) => a - b)
+        }
     ];
 
     for (const metric of metrics) {
-        if (metric.std && metric.std > 0) {
-            const z = (metric.score - metric.avg) / metric.std;
-            if (Math.abs(z) > 2) {
-                const severity = Math.abs(z) > 3 ? 'HIGH' : 'MEDIUM';
-                await db.query(
-                    `INSERT INTO anomalies (company_id, year, metric_type, severity, reason)
-                     VALUES (?, ?, ?, ?, ?)`,
-                    [
-                        companyId, year, metric.name, severity,
-                        `${metric.name} score of ${metric.score} is ${Math.abs(z).toFixed(2)} standard deviations from the ${sector} industry average of ${parseFloat(metric.avg).toFixed(1)}`
-                    ]
-                );
-                count++;
-            }
+        const scores = metric.allScores;
+        const n = scores.length;
+
+        // Calculate real percentile thresholds
+        const p25 = scores[Math.floor(n * 0.25)];  // bottom 25% = poor
+        const p75 = scores[Math.floor(n * 0.75)];  // top 25% = good
+        const p95 = scores[Math.floor(n * 0.95)];  // top 5% = suspicious
+
+        let severity = null;
+        let reason = null;
+
+        if (metric.score >= p95) {
+            // Top 5% — suspiciously high
+            severity = 'HIGH';
+            reason = `${metric.name} score of ${metric.score.toFixed(1)} is in the top 5% of the ${sector} sector (above ${p95.toFixed(1)}) — suspiciously high, possible data manipulation`;
+        } else if (metric.score <= p25) {
+            // Bottom 25% — poor performance
+            severity = 'MEDIUM';
+            reason = `${metric.name} score of ${metric.score.toFixed(1)} is in the bottom 25% of the ${sector} sector (below ${p25.toFixed(1)}) — underperforming peers`;
+        }
+
+        if (severity) {
+            await db.query(
+                `INSERT INTO anomalies (company_id, year, metric_type, severity, reason)
+                 VALUES (?, ?, ?, ?, ?)`,
+                [companyId, year, metric.name, severity, reason]
+            );
+            count++;
         }
     }
     return count;
