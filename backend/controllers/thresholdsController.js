@@ -25,13 +25,11 @@ exports.getThresholdsBySector = async (req, res) => {
 
 exports.updateThreshold = async (req, res) => {
     try {
-        const { poor_below, good_above, suspicious_above } = req.body;
+        const { benchmark } = req.body;
 
         await db.query(
-            `UPDATE sector_thresholds
-             SET poor_below = ?, good_above = ?, suspicious_above = ?
-             WHERE id = ?`,
-            [poor_below, good_above, suspicious_above, req.params.id]
+            'UPDATE sector_thresholds SET benchmark = ? WHERE id = ?',
+            [benchmark, req.params.id]
         );
 
         // Delete all old anomalies
@@ -56,7 +54,7 @@ exports.updateThreshold = async (req, res) => {
         }
 
         res.json({
-            message: `Threshold updated! Anomalies recalculated — ${anomaliesDetected} total anomalies detected.`
+            message: `Benchmark updated! Anomalies recalculated — ${anomaliesDetected} total anomalies detected.`
         });
 
     } catch (err) {
@@ -67,41 +65,41 @@ exports.updateThreshold = async (req, res) => {
 async function detectAnomalies(companyId, sector, year, envScore, socScore, govScore) {
     let count = 0;
 
-    const [sectorAvg] = await db.query(
-        `SELECT
-            AVG(e.environmental_score) as avg_env,
-            AVG(e.social_score) as avg_soc,
-            AVG(e.governance_score) as avg_gov
-         FROM esg_metrics e
-         JOIN companies c ON e.company_id = c.id
-         WHERE c.sector = ?`,
+    const [thresholds] = await db.query(
+        'SELECT * FROM sector_thresholds WHERE sector = ?',
         [sector]
     );
 
-    if (!sectorAvg[0].avg_env) return count;
-
-    const avg = sectorAvg[0];
+    const getBenchmark = (metricType) => {
+        const t = thresholds.find(t => t.metric_type === metricType);
+        return t ? t.benchmark : 40;
+    };
 
     const metrics = [
-        { name: 'environmental', score: envScore, avg: parseFloat(avg.avg_env) },
-        { name: 'social', score: socScore, avg: parseFloat(avg.avg_soc) },
-        { name: 'governance', score: govScore, avg: parseFloat(avg.avg_gov) }
+        { name: 'environmental', score: envScore },
+        { name: 'social', score: socScore },
+        { name: 'governance', score: govScore }
     ];
 
     for (const metric of metrics) {
-        const ratio = metric.score / metric.avg;
+        const benchmark = getBenchmark(metric.name);
+        const deviation = ((metric.score - benchmark) / benchmark) * 100;
+
         let severity = null;
         let reason = null;
 
-        if (ratio > 1.6) {
-            severity = 'HIGH';
-            reason = `${metric.name} score of ${metric.score.toFixed(1)} is ${((ratio - 1) * 100).toFixed(0)}% above the ${sector} sector average of ${metric.avg.toFixed(1)} — suspiciously high, possible greenwashing`;
-        } else if (ratio < 0.7) {
-            severity = 'MEDIUM';
-            reason = `${metric.name} score of ${metric.score.toFixed(1)} is ${((1 - ratio) * 100).toFixed(0)}% below the ${sector} sector average of ${metric.avg.toFixed(1)} — underperforming sector peers`;
-        } else if (ratio > 1.3) {
-            severity = 'LOW';
-            reason = `${metric.name} score of ${metric.score.toFixed(1)} is ${((ratio - 1) * 100).toFixed(0)}% above the ${sector} sector average of ${metric.avg.toFixed(1)} — performing above sector average`;
+        if (deviation >= 50) {
+            severity = 'SUSPICIOUS';
+            reason = `${metric.name} score of ${metric.score.toFixed(1)} is ${deviation.toFixed(1)}% above the ${sector} sector benchmark of ${benchmark} — suspiciously high, possible greenwashing`;
+        } else if (deviation >= 20) {
+            severity = 'GOOD';
+            reason = `${metric.name} score of ${metric.score.toFixed(1)} is ${deviation.toFixed(1)}% above the ${sector} sector benchmark of ${benchmark} — performing above market standard`;
+        } else if (deviation <= -50) {
+            severity = 'POOR';
+            reason = `${metric.name} score of ${metric.score.toFixed(1)} is ${Math.abs(deviation).toFixed(1)}% below the ${sector} sector benchmark of ${benchmark} — critically underperforming`;
+        } else if (deviation <= -20) {
+            severity = 'POOR';
+            reason = `${metric.name} score of ${metric.score.toFixed(1)} is ${Math.abs(deviation).toFixed(1)}% below the ${sector} sector benchmark of ${benchmark} — underperforming market standard`;
         }
 
         if (severity) {
