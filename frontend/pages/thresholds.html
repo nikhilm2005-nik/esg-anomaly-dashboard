@@ -21,25 +21,46 @@
     </nav>
 
     <div class="container">
-        <h1 class="page-title">Sector Thresholds</h1>
+        <h1 class="page-title">Sector ESG Benchmarks</h1>
 
         <!-- Info Box -->
         <div style="background:#e8f5e9; border-left:4px solid #388e3c;
              padding:20px 25px; border-radius:8px; margin-bottom:25px;">
-            <h3 style="color:#388e3c; margin-bottom:8px;">ℹ️ How Thresholds Work</h3>
-            <p style="color:#555;">
-                Each sector has its own ESG threshold values based on real market standards.
-                Scores are compared against these thresholds to determine if a company is
-                <b style="color:#d32f2f;">Poor 🔴</b>,
-                <b style="color:#f57c00;">Average 🟡</b>,
-                <b style="color:#388e3c;">Good 🟢</b> or
-                <b style="color:#7b1fa2;">Suspicious ⚠️</b>.
+            <h3 style="color:#388e3c; margin-bottom:10px;">
+                ℹ️ How Benchmark Detection Works
+            </h3>
+            <p style="color:#555; margin-bottom:10px;">
+                Each sector has one <b>benchmark value</b> per ESG metric based on
+                real S&P Global and MSCI market research. Companies are compared
+                against this benchmark and classified by deviation:
             </p>
+            <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px;">
+                <div style="background:white; padding:10px; border-radius:8px; text-align:center;">
+                    <div style="font-size:1.5rem;">⚠️</div>
+                    <b style="color:#7b1fa2;">SUSPICIOUS</b>
+                    <p style="font-size:0.8rem; color:#555;">50%+ above benchmark</p>
+                </div>
+                <div style="background:white; padding:10px; border-radius:8px; text-align:center;">
+                    <div style="font-size:1.5rem;">🟢</div>
+                    <b style="color:#388e3c;">GOOD</b>
+                    <p style="font-size:0.8rem; color:#555;">20-50% above benchmark</p>
+                </div>
+                <div style="background:white; padding:10px; border-radius:8px; text-align:center;">
+                    <div style="font-size:1.5rem;">✅</div>
+                    <b style="color:#1976d2;">NORMAL</b>
+                    <p style="font-size:0.8rem; color:#555;">Within 20% of benchmark</p>
+                </div>
+                <div style="background:white; padding:10px; border-radius:8px; text-align:center;">
+                    <div style="font-size:1.5rem;">🔴</div>
+                    <b style="color:#d32f2f;">POOR</b>
+                    <p style="font-size:0.8rem; color:#555;">20%+ below benchmark</p>
+                </div>
+            </div>
         </div>
 
         <!-- Sector Filter -->
         <div class="section">
-            <div style="display:flex; gap:15px; flex-wrap:wrap;">
+            <div style="display:flex; gap:15px;">
                 <select id="sectorFilter"
                     style="padding:10px 15px; border:1px solid #ddd;
                     border-radius:8px; font-size:0.95rem; flex:1;">
@@ -50,57 +71,54 @@
 
         <!-- Thresholds Table -->
         <div class="section">
-            <h2>Current Threshold Values</h2>
+            <h2>Benchmark Values</h2>
             <br>
             <table class="data-table">
                 <thead>
                     <tr>
                         <th>Sector</th>
                         <th>Metric</th>
-                        <th>🔴 Poor Below</th>
-                        <th>🟢 Good Above</th>
-                        <th>⚠️ Suspicious Above</th>
+                        <th>Benchmark Value</th>
+                        <th>POOR if below</th>
+                        <th>GOOD if above</th>
+                        <th>SUSPICIOUS if above</th>
                         <th>Action</th>
                     </tr>
                 </thead>
                 <tbody id="thresholdsTable">
-                    <tr>
-                        <td colspan="6" style="text-align:center;">
-                            Loading...
-                        </td>
-                    </tr>
+                    <tr><td colspan="7" style="text-align:center;">Loading...</td></tr>
                 </tbody>
             </table>
         </div>
 
-        <!-- Result -->
         <div id="resultArea" style="display:none; margin-bottom:20px;"></div>
     </div>
 
     <!-- Edit Modal -->
     <div id="editModal" style="display:none; position:fixed; top:0; left:0;
          width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
-        <div style="background:white; margin:100px auto; padding:30px;
-             border-radius:12px; max-width:450px;">
-            <h2 style="margin-bottom:20px;">✏️ Edit Threshold</h2>
+        <div style="background:white; margin:150px auto; padding:30px;
+             border-radius:12px; max-width:400px;">
+            <h2 style="margin-bottom:10px;">✏️ Edit Benchmark</h2>
             <p id="editLabel" style="color:#888; margin-bottom:20px;"></p>
 
             <div class="form-group">
-                <label>🔴 Poor Below</label>
-                <input type="number" id="editPoor" step="0.1">
-            </div>
-            <div class="form-group">
-                <label>🟢 Good Above</label>
-                <input type="number" id="editGood" step="0.1">
-            </div>
-            <div class="form-group">
-                <label>⚠️ Suspicious Above</label>
-                <input type="number" id="editSuspicious" step="0.1">
+                <label>Benchmark Value (0-100)</label>
+                <input type="number" id="editBenchmark" step="0.1" min="0" max="100">
             </div>
 
-            <div style="display:flex; gap:10px; margin-top:20px;">
+            <div style="background:#fff8e1; padding:12px; border-radius:8px;
+                 margin-bottom:15px; font-size:0.85rem; color:#555;">
+                <b>Deviation rules:</b><br>
+                🔴 POOR → score is 20%+ below this value<br>
+                ✅ NORMAL → score is within 20% of this value<br>
+                🟢 GOOD → score is 20-50% above this value<br>
+                ⚠️ SUSPICIOUS → score is 50%+ above this value
+            </div>
+
+            <div style="display:flex; gap:10px;">
                 <button class="btn btn-primary" onclick="saveThreshold()">
-                    💾 Save Changes
+                    💾 Save & Recalculate
                 </button>
                 <button class="btn" onclick="closeModal()"
                     style="background:#eee; color:#333;">
