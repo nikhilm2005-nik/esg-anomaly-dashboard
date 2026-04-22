@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
+
     <nav class="navbar">
         <div class="nav-brand">📊 ESG Dashboard</div>
         <ul class="nav-links">
@@ -23,26 +24,30 @@
     <div class="container">
         <h1 class="page-title">Companies</h1>
 
-        <!-- Search and Filter -->
+        <!-- Filter Bar -->
         <div class="section">
-            <div style="display:flex; gap:15px; flex-wrap:wrap;">
-                <input type="text" id="searchInput" placeholder="🔍 Search company..."
-                    style="flex:1; padding:10px 15px; border:1px solid #ddd; border-radius:8px; font-size:0.95rem;">
-                <select id="sectorFilter"
-                    style="padding:10px 15px; border:1px solid #ddd; border-radius:8px; font-size:0.95rem;">
+            <div class="filter-bar">
+                <input type="text" id="searchInput" placeholder="🔍 Search company name...">
+                <select id="sectorFilter">
                     <option value="">All Sectors</option>
+                </select>
+                <select id="statusFilter">
+                    <option value="">All Status</option>
+                    <option value="flagged">🚨 Flagged</option>
+                    <option value="normal">✅ Normal</option>
                 </select>
             </div>
         </div>
 
         <!-- Companies Table -->
         <div class="section">
+            <h2>All Companies</h2>
             <table class="data-table">
                 <thead>
                     <tr>
                         <th>Company</th>
                         <th>Sector</th>
-                        <th>Country</th>
+                        <th>Exchange</th>
                         <th>Avg ESG Score</th>
                         <th>Anomalies</th>
                         <th>Status</th>
@@ -50,20 +55,36 @@
                     </tr>
                 </thead>
                 <tbody id="companiesTable">
-                    <tr><td colspan="7" style="text-align:center;">Loading...</td></tr>
+                    <tr>
+                        <td colspan="7" style="text-align:center; padding:40px; color:var(--text-muted);">
+                            <div class="spinner" style="margin:0 auto 12px;"></div>
+                            Loading companies...
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
     </div>
 
     <!-- Edit Modal -->
-    <div id="editModal" style="display:none; position:fixed; top:0; left:0; width:100%;
-         height:100%; background:rgba(0,0,0,0.5); z-index:1000; overflow:auto;">
-        <div style="background:white; margin:50px auto; padding:30px;
-             border-radius:12px; max-width:600px; position:relative;">
-            <h2 style="margin-bottom:20px;">✏️ Edit Company</h2>
+    <div id="editModal" style="display:none; position:fixed; inset:0;
+         background:rgba(0,0,0,0.75); backdrop-filter:blur(8px);
+         z-index:2000; overflow:auto;">
+        <div style="background:var(--bg-surface); margin:40px auto; padding:32px;
+             border-radius:var(--radius-xl); max-width:600px; position:relative;
+             border:1px solid var(--border); box-shadow:var(--shadow-lg);">
 
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
+            <div style="position:absolute; top:0; left:0; right:0; height:1px;
+                 background:linear-gradient(90deg,transparent,var(--accent-cyan),transparent);
+                 border-radius:var(--radius-xl) var(--radius-xl) 0 0;"></div>
+
+            <h2 style="font-family:'Syne',sans-serif; font-size:1.1rem; font-weight:700;
+                margin-bottom:4px; letter-spacing:-0.02em;">✏️ Edit Company</h2>
+            <p style="color:var(--text-secondary); font-size:0.82rem; margin-bottom:24px;">
+                Update company information and ESG scores
+            </p>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
                 <div class="form-group">
                     <label>Company Name</label>
                     <input type="text" id="editName">
@@ -73,7 +94,7 @@
                     <input type="text" id="editSector">
                 </div>
                 <div class="form-group">
-                    <label>Country</label>
+                    <label>Country / Exchange</label>
                     <input type="text" id="editCountry">
                 </div>
                 <div class="form-group">
@@ -82,29 +103,28 @@
                 </div>
                 <div class="form-group">
                     <label>🌱 Environmental Score</label>
-                    <input type="number" id="editEnv">
+                    <input type="number" id="editEnv" step="0.1">
                 </div>
                 <div class="form-group">
                     <label>👥 Social Score</label>
-                    <input type="number" id="editSoc">
+                    <input type="number" id="editSoc" step="0.1">
                 </div>
                 <div class="form-group">
                     <label>🏛️ Governance Score</label>
-                    <input type="number" id="editGov">
+                    <input type="number" id="editGov" step="0.1">
                 </div>
                 <div class="form-group">
                     <label>📊 Total Score</label>
-                    <input type="number" id="editTotal">
+                    <input type="number" id="editTotal" step="0.1">
                 </div>
             </div>
 
-            <div style="display:flex; gap:10px; margin-top:20px;">
+            <div style="display:flex; gap:10px; margin-top:8px;">
                 <button class="btn btn-primary" onclick="saveEdit()">💾 Save Changes</button>
-                <button class="btn" onclick="closeModal()"
-                    style="background:#eee; color:#333;">Cancel</button>
+                <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
             </div>
 
-            <div id="editResult" style="display:none; margin-top:15px;"></div>
+            <div id="editResult" style="display:none; margin-top:16px;"></div>
         </div>
     </div>
 
