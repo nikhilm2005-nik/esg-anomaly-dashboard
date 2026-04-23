@@ -11,7 +11,7 @@ async function loadCompanies() {
         const sectors = [...new Set(allCompanies.map(c => c.sector).filter(Boolean))];
         const sectorFilter = document.getElementById('sectorFilter');
         sectorFilter.innerHTML = '<option value="">All Sectors</option>';
-        sectors.forEach(sector => {
+        sectors.sort().forEach(sector => {
             const option = document.createElement('option');
             option.value = sector;
             option.textContent = sector;
@@ -21,6 +21,10 @@ async function loadCompanies() {
         renderTable(allCompanies);
     } catch (err) {
         console.error('Error loading companies:', err);
+        document.getElementById('companiesTable').innerHTML =
+            `<tr><td colspan="7" style="text-align:center; color:var(--accent-red); padding:32px;">
+                ❌ Could not connect to server. Make sure backend is running!
+            </td></tr>`;
     }
 }
 
@@ -28,7 +32,10 @@ function renderTable(companies) {
     const tbody = document.getElementById('companiesTable');
 
     if (companies.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No companies found</td></tr>';
+        tbody.innerHTML = `
+            <tr><td colspan="7" style="text-align:center; padding:40px; color:var(--text-muted);">
+                No companies found
+            </td></tr>`;
         return;
     }
 
@@ -36,24 +43,27 @@ function renderTable(companies) {
         const score = c.avg_score ? parseFloat(c.avg_score).toFixed(1) : 'N/A';
         const anomalyCount = c.anomaly_count || 0;
         const status = anomalyCount > 0
-            ? `<span class="badge badge-high">🚨 Flagged</span>`
-            : `<span class="badge badge-low">✅ Normal</span>`;
+            ? `<span class="badge badge-flagged">🚨 Flagged</span>`
+            : `<span class="badge badge-normal">✅ Normal</span>`;
 
         return `
             <tr>
-                <td><b>${c.name}</b></td>
-                <td>${c.sector || 'Unknown'}</td>
-                <td>${c.country || 'Unknown'}</td>
-                <td>${score}</td>
-                <td>${anomalyCount}</td>
+                <td><span style="font-weight:600;">${c.name}</span></td>
+                <td style="color:var(--text-secondary);">${c.sector || '—'}</td>
+                <td style="color:var(--text-secondary);">${c.country || '—'}</td>
+                <td><span style="font-weight:600; color:var(--accent-cyan);">${score}</span></td>
+                <td>${anomalyCount > 0
+                    ? `<span style="color:var(--accent-orange); font-weight:600;">${anomalyCount}</span>`
+                    : `<span style="color:var(--text-muted);">0</span>`}
+                </td>
                 <td>${status}</td>
                 <td>
-                    <button class="btn btn-primary" 
-                        style="padding:5px 10px; font-size:0.8rem; margin-right:5px;"
-                        onclick="openEdit(${c.id})">✏️ Edit</button>
-                    <button class="btn" 
-                        style="padding:5px 10px; font-size:0.8rem; background:#ffebee; color:#d32f2f;"
-                        onclick="deleteCompany(${c.id}, '${c.name}')">🗑️ Delete</button>
+                    <button class="action-btn action-btn-edit" onclick="openEdit(${c.id})">
+                        ✏️ Edit
+                    </button>
+                    <button class="action-btn action-btn-delete" onclick="deleteCompany(${c.id}, '${c.name.replace(/'/g, "\\'")}')">
+                        🗑️ Delete
+                    </button>
                 </td>
             </tr>
         `;
@@ -63,33 +73,33 @@ function renderTable(companies) {
 // Search and Filter
 document.getElementById('searchInput').addEventListener('input', filterTable);
 document.getElementById('sectorFilter').addEventListener('change', filterTable);
+document.getElementById('statusFilter').addEventListener('change', filterTable);
 
 function filterTable() {
     const search = document.getElementById('searchInput').value.toLowerCase();
     const sector = document.getElementById('sectorFilter').value;
+    const status = document.getElementById('statusFilter').value;
 
     const filtered = allCompanies.filter(c => {
         const matchesSearch = c.name.toLowerCase().includes(search);
         const matchesSector = sector === '' || c.sector === sector;
-        return matchesSearch && matchesSector;
+        const matchesStatus = status === '' ||
+            (status === 'flagged' && c.anomaly_count > 0) ||
+            (status === 'normal' && c.anomaly_count === 0);
+        return matchesSearch && matchesSector && matchesStatus;
     });
 
     renderTable(filtered);
 }
 
-
+// ---- EDIT ----
 async function openEdit(id) {
     editingId = id;
-
-    // Get company data
     const company = allCompanies.find(c => c.id === id);
-
-    // Get ESG metrics
     const res = await fetch(`${API}/esg/${id}`);
     const metrics = await res.json();
     const m = metrics[0] || {};
 
-    // Fill form
     document.getElementById('editName').value = company.name || '';
     document.getElementById('editSector').value = company.sector || '';
     document.getElementById('editCountry').value = company.country || '';
@@ -133,29 +143,22 @@ async function saveEdit() {
 
         if (res.ok) {
             resultDiv.innerHTML = `<div class="result-success">✅ ${data.message}</div>`;
-            setTimeout(() => {
-                closeModal();
-                loadCompanies();
-            }, 1500);
+            setTimeout(() => { closeModal(); loadCompanies(); }, 1500);
         } else {
             resultDiv.innerHTML = `<div class="result-error">❌ ${data.error}</div>`;
         }
     } catch (err) {
-        console.error('Error updating company:', err);
+        console.error('Error updating:', err);
     }
 }
 
+// ---- DELETE ----
 async function deleteCompany(id, name) {
-    const confirm = window.confirm(`Are you sure you want to delete "${name}"?\nThis will also delete all its ESG metrics and anomalies.`);
-    if (!confirm) return;
+    if (!confirm(`Are you sure you want to delete "${name}"?\nThis will also delete all its ESG metrics and anomalies.`)) return;
 
     try {
-        const res = await fetch(`${API}/companies/delete/${id}`, {
-            method: 'DELETE'
-        });
-
+        const res = await fetch(`${API}/companies/delete/${id}`, { method: 'DELETE' });
         const data = await res.json();
-
         if (res.ok) {
             alert(`✅ ${data.message}`);
             loadCompanies();
@@ -163,7 +166,7 @@ async function deleteCompany(id, name) {
             alert(`❌ ${data.error}`);
         }
     } catch (err) {
-        console.error('Error deleting company:', err);
+        console.error('Error deleting:', err);
     }
 }
 
