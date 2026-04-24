@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
+
     <nav class="navbar">
         <div class="nav-brand">📊 ESG Dashboard</div>
         <ul class="nav-links">
@@ -15,6 +16,7 @@
             <li><a href="anomalies.html" class="active">Anomalies</a></li>
             <li><a href="upload.html">Upload</a></li>
             <li><a href="compare.html">Compare</a></li>
+            <li><a href="add-company.html">Add Company</a></li>
             <li><a href="thresholds.html">Thresholds</a></li>
         </ul>
     </nav>
@@ -22,65 +24,70 @@
     <div class="container">
         <h1 class="page-title">Detected Anomalies</h1>
 
+        <!-- Stat Cards -->
+        <div class="stat-cards">
+            <div class="stat-card">
+                <div class="stat-card-icon">⚠️</div>
+                <div class="stat-card-info">
+                    <h3 id="highCount" style="color:#a78bfa;">—</h3>
+                    <p>Suspicious</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-icon">🔴</div>
+                <div class="stat-card-info">
+                    <h3 id="mediumCount" style="color:#ff8c5a;">—</h3>
+                    <p>Poor Performing</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-icon">🟢</div>
+                <div class="stat-card-info">
+                    <h3 id="lowCount" style="color:#00f5a0;">—</h3>
+                    <p>Good Performing</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Bar -->
         <div class="section">
-            <div style="display:flex; gap:15px; flex-wrap:wrap;">
-                <input type="text" id="searchInput" placeholder="🔍 Search company..."
-                    style="flex:1; padding:10px 15px; border:1px solid #ddd; border-radius:8px; font-size:0.95rem;">
-                <select id="severityFilter"
-                    style="padding:10px 15px; border:1px solid #ddd; border-radius:8px; font-size:0.95rem;">
+            <div class="filter-bar">
+                <input type="text" id="searchInput" placeholder="🔍 Search company...">
+                <select id="severityFilter">
                     <option value="">All Categories</option>
                     <option value="SUSPICIOUS">⚠️ Suspicious</option>
                     <option value="POOR">🔴 Poor</option>
                     <option value="GOOD">🟢 Good</option>
                 </select>
-                <select id="metricFilter"
-                    style="padding:10px 15px; border:1px solid #ddd; border-radius:8px; font-size:0.95rem;">
+                <select id="metricFilter">
                     <option value="">All Metrics</option>
-                    <option value="environmental">Environmental</option>
-                    <option value="social">Social</option>
-                    <option value="governance">Governance</option>
+                    <option value="environmental">🌱 Environmental</option>
+                    <option value="social">👥 Social</option>
+                    <option value="governance">🏛️ Governance</option>
                 </select>
             </div>
         </div>
 
-        <!-- Summary Badges -->
-    <div style="display:flex; gap:15px; margin-bottom:25px; flex-wrap:wrap;">
-        <div class="card" style="flex:1;">
-            <div class="card-icon">⚠️</div>
-            <div class="card-info">
-                <h3 id="highCount">-</h3>
-                <p>Suspicious</p>
-            </div>
-        </div>
-        <div class="card" style="flex:1;">
-            <div class="card-icon">🔴</div>
-            <div class="card-info">
-                <h3 id="mediumCount">-</h3>
-                <p>Poor Performing</p>
-            </div>
-        </div>
-        <div class="card" style="flex:1;">
-            <div class="card-icon">🟢</div>
-            <div class="card-info">
-                <h3 id="lowCount">-</h3>
-                <p>Good Performing</p>
-            </div>
-        </div>
-</div>
-
+        <!-- Anomalies Table -->
         <div class="section">
+            <h2>All Flagged Entries</h2>
             <table class="data-table">
                 <thead>
                     <tr>
                         <th>Company</th>
                         <th>Sector</th>
                         <th>Metric</th>
-                        <th>Severity</th>
+                        <th>Category</th>
                         <th>Reason</th>
                     </tr>
                 </thead>
                 <tbody id="anomaliesTable">
-                    <tr><td colspan="5" style="text-align:center;">Loading...</td></tr>
+                    <tr>
+                        <td colspan="5" style="text-align:center; padding:40px; color:var(--text-muted);">
+                            <div class="spinner" style="margin:0 auto 12px;"></div>
+                            Loading anomalies...
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
