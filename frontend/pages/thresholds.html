@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
+
     <nav class="navbar">
         <div class="nav-brand">📊 ESG Dashboard</div>
         <ul class="nav-links">
@@ -23,47 +24,45 @@
     <div class="container">
         <h1 class="page-title">Sector ESG Benchmarks</h1>
 
-        <!-- Info Box -->
-        <div style="background:#e8f5e9; border-left:4px solid #388e3c;
-             padding:20px 25px; border-radius:8px; margin-bottom:25px;">
-            <h3 style="color:#388e3c; margin-bottom:10px;">
-                ℹ️ How Benchmark Detection Works
-            </h3>
-            <p style="color:#555; margin-bottom:10px;">
-                Each sector has one <b>benchmark value</b> per ESG metric based on
-                real S&P Global and MSCI market research. Companies are compared
-                against this benchmark and classified by deviation:
+        <!-- How it works -->
+        <div class="info-box info-box-success">
+            <div class="info-box-title" style="color:var(--accent-green);">ℹ️ How Benchmark Detection Works</div>
+            <p style="margin-bottom:16px;">
+                Each sector has one benchmark value per ESG metric based on real S&P Global and MSCI market research.
+                Companies are classified by how much they deviate from their sector benchmark:
             </p>
             <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px;">
-                <div style="background:white; padding:10px; border-radius:8px; text-align:center;">
-                    <div style="font-size:1.5rem;">⚠️</div>
-                    <b style="color:#7b1fa2;">SUSPICIOUS</b>
-                    <p style="font-size:0.8rem; color:#555;">50%+ above benchmark</p>
+                <div style="background:var(--bg-card); padding:14px; border-radius:var(--radius-md);
+                     text-align:center; border:1px solid var(--border);">
+                    <div style="font-size:1.4rem; margin-bottom:6px;">⚠️</div>
+                    <div style="font-weight:700; color:#a78bfa; font-size:0.85rem;">SUSPICIOUS</div>
+                    <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">50%+ above benchmark</div>
                 </div>
-                <div style="background:white; padding:10px; border-radius:8px; text-align:center;">
-                    <div style="font-size:1.5rem;">🟢</div>
-                    <b style="color:#388e3c;">GOOD</b>
-                    <p style="font-size:0.8rem; color:#555;">20-50% above benchmark</p>
+                <div style="background:var(--bg-card); padding:14px; border-radius:var(--radius-md);
+                     text-align:center; border:1px solid var(--border);">
+                    <div style="font-size:1.4rem; margin-bottom:6px;">🟢</div>
+                    <div style="font-weight:700; color:var(--accent-green); font-size:0.85rem;">GOOD</div>
+                    <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">20–50% above benchmark</div>
                 </div>
-                <div style="background:white; padding:10px; border-radius:8px; text-align:center;">
-                    <div style="font-size:1.5rem;">✅</div>
-                    <b style="color:#1976d2;">NORMAL</b>
-                    <p style="font-size:0.8rem; color:#555;">Within 20% of benchmark</p>
+                <div style="background:var(--bg-card); padding:14px; border-radius:var(--radius-md);
+                     text-align:center; border:1px solid var(--border);">
+                    <div style="font-size:1.4rem; margin-bottom:6px;">✅</div>
+                    <div style="font-weight:700; color:var(--accent-cyan); font-size:0.85rem;">NORMAL</div>
+                    <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">Within 20% of benchmark</div>
                 </div>
-                <div style="background:white; padding:10px; border-radius:8px; text-align:center;">
-                    <div style="font-size:1.5rem;">🔴</div>
-                    <b style="color:#d32f2f;">POOR</b>
-                    <p style="font-size:0.8rem; color:#555;">20%+ below benchmark</p>
+                <div style="background:var(--bg-card); padding:14px; border-radius:var(--radius-md);
+                     text-align:center; border:1px solid var(--border);">
+                    <div style="font-size:1.4rem; margin-bottom:6px;">🔴</div>
+                    <div style="font-weight:700; color:#ff8c5a; font-size:0.85rem;">POOR</div>
+                    <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">20%+ below benchmark</div>
                 </div>
             </div>
         </div>
 
-        <!-- Sector Filter -->
+        <!-- Filter -->
         <div class="section">
-            <div style="display:flex; gap:15px;">
-                <select id="sectorFilter"
-                    style="padding:10px 15px; border:1px solid #ddd;
-                    border-radius:8px; font-size:0.95rem; flex:1;">
+            <div class="filter-bar">
+                <select id="sectorFilter" style="flex:1;">
                     <option value="">All Sectors</option>
                 </select>
             </div>
@@ -72,21 +71,25 @@
         <!-- Thresholds Table -->
         <div class="section">
             <h2>Benchmark Values</h2>
-            <br>
             <table class="data-table">
                 <thead>
                     <tr>
                         <th>Sector</th>
                         <th>Metric</th>
-                        <th>Benchmark Value</th>
-                        <th>POOR if below</th>
-                        <th>GOOD if above</th>
-                        <th>SUSPICIOUS if above</th>
+                        <th>Benchmark</th>
+                        <th>🔴 Poor if below</th>
+                        <th>🟢 Good if above</th>
+                        <th>⚠️ Suspicious if above</th>
                         <th>Action</th>
                     </tr>
                 </thead>
                 <tbody id="thresholdsTable">
-                    <tr><td colspan="7" style="text-align:center;">Loading...</td></tr>
+                    <tr>
+                        <td colspan="7" style="text-align:center; padding:40px; color:var(--text-muted);">
+                            <div class="spinner" style="margin:0 auto 12px;"></div>
+                            Loading benchmarks...
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -95,37 +98,44 @@
     </div>
 
     <!-- Edit Modal -->
-    <div id="editModal" style="display:none; position:fixed; top:0; left:0;
-         width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
-        <div style="background:white; margin:150px auto; padding:30px;
-             border-radius:12px; max-width:400px;">
-            <h2 style="margin-bottom:10px;">✏️ Edit Benchmark</h2>
-            <p id="editLabel" style="color:#888; margin-bottom:20px;"></p>
+    <div id="editModal" style="display:none; position:fixed; inset:0;
+         background:rgba(0,0,0,0.75); backdrop-filter:blur(8px);
+         z-index:2000; display:none; align-items:center; justify-content:center; padding:20px;">
+        <div style="background:var(--bg-surface); padding:32px; border-radius:var(--radius-xl);
+             max-width:420px; width:100%; border:1px solid var(--border); box-shadow:var(--shadow-lg);
+             position:relative;">
+
+            <div style="position:absolute; top:0; left:0; right:0; height:1px;
+                 background:linear-gradient(90deg,transparent,var(--accent-cyan),transparent);
+                 border-radius:var(--radius-xl) var(--radius-xl) 0 0;"></div>
+
+            <h2 style="font-family:'Syne',sans-serif; font-size:1.1rem; font-weight:700;
+                margin-bottom:4px;">✏️ Edit Benchmark</h2>
+            <p id="editLabel" style="color:var(--text-secondary); font-size:0.82rem;
+                margin-bottom:20px;"></p>
 
             <div class="form-group">
-                <label>Benchmark Value (0-100)</label>
+                <label>Benchmark Value (0–100)</label>
                 <input type="number" id="editBenchmark" step="0.1" min="0" max="100">
             </div>
 
-            <div style="background:#fff8e1; padding:12px; border-radius:8px;
-                 margin-bottom:15px; font-size:0.85rem; color:#555;">
-                <b>Deviation rules:</b><br>
+            <div style="background:var(--bg-elevated); border:1px solid var(--border);
+                 padding:14px; border-radius:var(--radius-sm); margin-bottom:20px;
+                 font-size:0.8rem; color:var(--text-secondary); line-height:1.8;">
+                <b style="color:var(--text-primary);">Deviation rules:</b><br>
                 🔴 POOR → score is 20%+ below this value<br>
                 ✅ NORMAL → score is within 20% of this value<br>
-                🟢 GOOD → score is 20-50% above this value<br>
+                🟢 GOOD → score is 20–50% above this value<br>
                 ⚠️ SUSPICIOUS → score is 50%+ above this value
             </div>
 
             <div style="display:flex; gap:10px;">
-                <button class="btn btn-primary" onclick="saveThreshold()">
+                <button class="btn btn-primary" onclick="saveThreshold()" style="flex:1; justify-content:center;">
                     💾 Save & Recalculate
                 </button>
-                <button class="btn" onclick="closeModal()"
-                    style="background:#eee; color:#333;">
-                    Cancel
-                </button>
+                <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
             </div>
-            <div id="editResult" style="display:none; margin-top:15px;"></div>
+            <div id="editResult" style="display:none; margin-top:16px;"></div>
         </div>
     </div>
 

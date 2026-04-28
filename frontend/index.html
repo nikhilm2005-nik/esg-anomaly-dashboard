@@ -8,6 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+
     <nav class="navbar">
         <div class="nav-brand">📊 ESG Dashboard</div>
         <ul class="nav-links">
@@ -16,6 +17,7 @@
             <li><a href="pages/anomalies.html">Anomalies</a></li>
             <li><a href="pages/upload.html">Upload</a></li>
             <li><a href="pages/compare.html">Compare</a></li>
+            <li><a href="pages/add-company.html">Add Company</a></li>
             <li><a href="pages/thresholds.html">Thresholds</a></li>
         </ul>
     </nav>
@@ -23,53 +25,136 @@
     <div class="container">
         <h1 class="page-title">Dashboard Overview</h1>
 
+        <!-- Summary Cards -->
         <div class="cards-grid">
             <div class="card">
                 <div class="card-icon">🏢</div>
                 <div class="card-info">
-                    <h3 id="totalCompanies">-</h3>
+                    <h3 id="totalCompanies">—</h3>
                     <p>Total Companies</p>
                 </div>
             </div>
             <div class="card">
                 <div class="card-icon">🚨</div>
                 <div class="card-info">
-                    <h3 id="totalAnomalies">-</h3>
+                    <h3 id="totalAnomalies">—</h3>
                     <p>Anomalies Detected</p>
                 </div>
             </div>
             <div class="card">
                 <div class="card-icon">📈</div>
                 <div class="card-info">
-                    <h3 id="avgScore">-</h3>
-                    <p>Average ESG Score(1-100)</p>
+                    <h3 id="avgScore">—</h3>
+                    <p>Avg ESG Score (0–100)</p>
                 </div>
             </div>
             <div class="card">
-                <div class="card-icon">🔴</div>
+                <div class="card-icon">⚠️</div>
                 <div class="card-info">
-                    <h3 id="highRisk">-</h3>
-                    <p>High Risk Companies</p>
+                    <h3 id="highRisk">—</h3>
+                    <p>Suspicious Companies</p>
                 </div>
             </div>
         </div>
 
-        <div class="section">
-            <h2>Top Flagged Companies</h2>
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Company</th>
-                        <th>Anomalies Found</th>
-                    </tr>
-                </thead>
-                <tbody id="topFlaggedTable">
-                    <tr><td colspan="2">No data yet — upload a CSV to get started</td></tr>
-                </tbody>
-            </table>
+        <!-- Top Flagged + Chart Row -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px;">
+
+            <!-- Top Flagged Companies -->
+            <div class="section">
+                <h2>Top Flagged Companies</h2>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Company</th>
+                            <th>Anomalies</th>
+                        </tr>
+                    </thead>
+                    <tbody id="topFlaggedTable">
+                        <tr>
+                            <td colspan="2" style="text-align:center; color:var(--text-muted); padding:32px;">
+                                No data yet — upload a CSV to get started
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Anomaly Distribution Chart -->
+            <div class="section">
+                <h2>Anomaly Distribution</h2>
+                <div class="chart-container" style="padding:12px;">
+                    <canvas id="anomalyChart" height="200"></canvas>
+                </div>
+            </div>
+
         </div>
+
+        <!-- Quick Links -->
+        <div class="section">
+            <h2>Quick Actions</h2>
+            <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                <a href="pages/upload.html">
+                    <button class="btn btn-primary">📁 Upload Dataset</button>
+                </a>
+                <a href="pages/companies.html">
+                    <button class="btn btn-ghost">🏢 Browse Companies</button>
+                </a>
+                <a href="pages/anomalies.html">
+                    <button class="btn btn-ghost">🚨 View Anomalies</button>
+                </a>
+                <a href="pages/compare.html">
+                    <button class="btn btn-ghost">📊 Compare Companies</button>
+                </a>
+                <a href="pages/thresholds.html">
+                    <button class="btn btn-ghost">⚙️ Manage Thresholds</button>
+                </a>
+            </div>
+        </div>
+
     </div>
 
     <script src="js/dashboard.js"></script>
+    <script>
+        // Anomaly distribution chart
+        async function loadChart() {
+            try {
+                const res = await fetch('http://localhost:3000/api/anomalies');
+                const anomalies = await res.json();
+                const suspicious = anomalies.filter(a => a.severity === 'SUSPICIOUS').length;
+                const poor = anomalies.filter(a => a.severity === 'POOR').length;
+                const good = anomalies.filter(a => a.severity === 'GOOD').length;
+
+                const ctx = document.getElementById('anomalyChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Suspicious', 'Poor', 'Good'],
+                        datasets: [{
+                            data: [suspicious, poor, good],
+                            backgroundColor: ['rgba(255,71,87,0.8)', 'rgba(255,107,53,0.8)', 'rgba(0,245,160,0.8)'],
+                            borderColor: ['#ff4757', '#ff6b35', '#00f5a0'],
+                            borderWidth: 2,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        cutout: '65%',
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    color: '#8892b0',
+                                    padding: 16,
+                                    font: { family: 'DM Sans', size: 12 }
+                                }
+                            }
+                        }
+                    }
+                });
+            } catch (err) { console.error(err); }
+        }
+        loadChart();
+    </script>
 </body>
 </html>
